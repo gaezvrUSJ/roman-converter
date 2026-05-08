@@ -1,5 +1,6 @@
 function integerToRoman(num) {
-  if (num <= 0 || num >= 4000) {
+
+  if (typeof num !== 'number' || isNaN(num) || num <= 0 || num >= 4000) {
     throw new Error('The number must be between 1 and 3999.');
   }
   
@@ -33,6 +34,7 @@ function romanToInteger(roman) {
   if (typeof roman !== 'string' || roman.trim() === '') {
     throw new Error('Input must be a valid Roman numeral.');
   }
+  
   roman = roman.toUpperCase();
   
   if (!/^[IVXLCDM]+$/.test(roman)) {
