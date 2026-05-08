@@ -18,35 +18,37 @@ jobs:
       with:
         node-version: '18'
     
-    - name: Basic linting
-      run: node -c script.js
-    
     - name: Install dependencies
       run: |
-        npm install jsdom
-        npm install mocha
+        npm install -g mocha chai jsdom
     
     - name: Run tests
       run: |
         node -e "
         const fs = require('fs');
-        const jsdom = require('jsdom');
-        const { JSDOM } = jsdom;
+        const { JSDOM } = require('jsdom');
         
         const html = fs.readFileSync('test.html', 'utf8');
-        const dom = new JSDOM(html, { runScripts: 'dangerously', resources: 'usable' });
+        const dom = new JSDOM(html);
         
         global.window = dom.window;
         global.document = dom.window.document;
-        global.navigator = dom.window.navigator;
+        global.location = dom.window.location;
         
-        const script = fs.readFileSync('script.js', 'utf8');
-        eval(script);
+        const scriptContent = fs.readFileSync('script.js', 'utf8');
+        eval(scriptContent);
         
-        const tests = fs.readFileSync('tests.js', 'utf8');
-        eval(tests);
+        global.chai = require('chai');
+        global.expect = global.chai.expect;
+        global.mocha = require('mocha');
         
-        console.log('Tests execution completed');
+        const testsContent = fs.readFileSync('tests.js', 'utf8');
+        eval(testsContent);
+        
+        const mocha = new global.mocha();
+        mocha.run(function(failures) {
+          process.exitCode = failures ? 1 : 0;
+        });
         "
     
     - name: Deploy to GitHub Pages
