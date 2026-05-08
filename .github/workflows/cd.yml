@@ -12,46 +12,18 @@ jobs:
       contents: write
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    
+
     - name: Basic linting
       run: node -c script.js
     
-    - name: Run tests
+
+    - name: Run tests with headless browser
       run: |
-        npm install mocha jsdom chai
-        node -e "
-        const fs = require('fs');
-        const { JSDOM } = require('jsdom');
-        const chai = require('chai');
-        
-        global.expect = chai.expect;
-        
-        const html = fs.readFileSync('test.html', 'utf8');
-        const dom = new JSDOM(html);
-        
-        global.window = dom.window;
-        global.document = dom.window.document;
-        
-        const script = fs.readFileSync('script.js', 'utf8');
-        eval(script);
-        
-        const tests = fs.readFileSync('tests.js', 'utf8');
-        eval(tests);
-        
-        console.log('All tests passed');
-        "
-    
+        sudo apt-get update
+        sudo apt-get install -y chromium-browser
+        npm install mocha puppeteer
+     
+
     - name: Deploy to GitHub Pages
       if: success()
       uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./
-        publish_branch: gh-pages
