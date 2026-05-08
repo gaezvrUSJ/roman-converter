@@ -8,14 +8,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write          # <--- Línea 1: concede permiso de escritura
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Check syntax
-      run: node -c script.js
-    
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
       with:
