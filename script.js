@@ -100,3 +100,11 @@ if (typeof window !== "undefined") {
   window.integerToRoman = integerToRoman;
   window.romanToInteger = romanToInteger;
 }
+
+
+if (typeof module !== "undefined") {
+  module.exports = {
+    integerToRoman,
+    romanToInteger
+  };
+}
