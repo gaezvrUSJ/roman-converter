@@ -6,16 +6,50 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  test-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Run linting
+      run: |
+        npm install -g eslint
+        eslint script.js --env browser --env node || true
+    
+    - name: Run tests
+      run: |
+        npm install -g mocha puppeteer
+        node -e "
+        const puppeteer = require('puppeteer');
+        (async () => {
+          const browser = await puppeteer.launch({args: ['--no-sandbox']});
+          const page = await browser.newPage();
+          await page.goto('file://' + process.cwd() + '/test.html');
+          await page.waitForFunction(
+            'document.querySelector(\"#mocha\").innerText.includes(\"passing\")',
+            {timeout: 15000}
+          );
+          const stats = await page.evaluate(() => {
+            const text = document.querySelector('#mocha').innerText;
+            const failures = (text.match(/\d+ failing/g) || ['0 failing'])[0];
+            return { failures };
+          });
+          if (stats.failures !== '0 failing') {
+            process.exit(1);
+          }
+          await browser.close();
+        })();
+        "
+    
     - name: Deploy to GitHub Pages
+      if: success()
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
