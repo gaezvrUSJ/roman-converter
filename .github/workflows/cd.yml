@@ -12,18 +12,46 @@ jobs:
       contents: write
     
     steps:
-
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: List files (debug)
+      run: ls -la
+    
     - name: Basic linting
       run: node -c script.js
     
-
     - name: Run tests with headless browser
       run: |
         sudo apt-get update
         sudo apt-get install -y chromium-browser
         npm install mocha puppeteer
-     
-
+        node -e "
+        const puppeteer = require('puppeteer');
+        (async () => {
+          const browser = await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox']});
+          const page = await browser.newPage();
+          await page.goto('file://' + process.cwd() + '/test.html');
+          await page.waitForFunction(
+            'document.querySelector(\\'#mocha\\').innerText.includes(\\'passing\\')',
+            {timeout: 15000}
+          );
+          const stats = await page.evaluate(() => {
+            const text = document.querySelector('#mocha').innerText;
+            const failures = (text.match(/\\d+ failing/g) || ['0 failing'])[0];
+            return { failures };
+          });
+          if (stats.failures !== '0 failing') {
+            process.exit(1);
+          }
+          await browser.close();
+        })();
+        "
+    
     - name: Deploy to GitHub Pages
       if: success()
       uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
+        publish_branch: gh-pages
