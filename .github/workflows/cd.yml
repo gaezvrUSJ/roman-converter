@@ -18,9 +18,8 @@ jobs:
       with:
         node-version: '18'
     
-    - name: Run ESLint (basic syntax check)
-      run: |
-        npx eslint script.js --no-eslintrc --env browser --env node || true
+- name: Run ESLint
+  run: npx eslint script.js --env browser --env node || echo "Linting warnings ignored"
     
     - name: Run tests with Node.js
       run: |
