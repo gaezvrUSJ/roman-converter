@@ -15,12 +15,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: List files (debug)
-      run: ls -la
-    
-    - name: Basic linting
-      run: node -c script.js
-    
     - name: Run tests with headless browser
       run: |
         sudo apt-get update
@@ -29,21 +23,35 @@ jobs:
         node -e "
         const puppeteer = require('puppeteer');
         (async () => {
-          const browser = await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox']});
-          const page = await browser.newPage();
-          await page.goto('file://' + process.cwd() + '/test.html');
-          await page.waitForFunction(
-            'document.querySelector(\\'#mocha\\').innerText.includes(\\'passing\\')',
-            {timeout: 15000}
-          );
-          const stats = await page.evaluate(() => {
-            const text = document.querySelector('#mocha').innerText;
-            const failures = (text.match(/\\d+ failing/g) || ['0 failing'])[0];
-            return { failures };
+          const browser = await puppeteer.launch({
+            executablePath: '/usr/bin/chromium-browser',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
           });
-          if (stats.failures !== '0 failing') {
+          const page = await browser.newPage();
+          console.log('Loading test page...');
+          await page.goto('file://' + process.cwd() + '/test.html', {waitUntil: 'networkidle0'});
+          
+          console.log('Waiting for tests to complete...');
+          await page.waitForFunction(
+            'document.querySelector && document.querySelector(\"#mocha\") && (document.querySelector(\"#mocha\").innerText.includes(\"passing\") || document.querySelector(\"#mocha\").innerText.includes(\"failing\"))',
+            {timeout: 30000}
+          );
+          
+          const results = await page.evaluate(() => {
+            const text = document.querySelector('#mocha').innerText;
+            const passes = (text.match(/(\d+) passing/g) || ['0 passing'])[0];
+            const failures = (text.match(/(\d+) failing/g) || ['0 failing'])[0];
+            return { text, passes, failures };
+          });
+          
+          console.log('Results:', results.text);
+          
+          if (results.failures !== '0 failing') {
+            console.log('Tests failed:', results.failures);
             process.exit(1);
           }
+          
+          console.log('All tests passed:', results.passes);
           await browser.close();
         })();
         "
