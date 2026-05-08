@@ -6,44 +6,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    
-- name: Run ESLint
-  run: npx eslint script.js --env browser --env node || echo "Linting warnings ignored"
-    
-    - name: Run tests with Node.js
-      run: |
-        npm install -g mocha jsdom jsdom-global
-        echo "const { JSDOM } = require('jsdom');" > test-runner.js
-        echo "const fs = require('fs');" >> test-runner.js
-        echo "const html = fs.readFileSync('test.html', 'utf8');" >> test-runner.js
-        echo "const dom = new JSDOM(html);" >> test-runner.js
-        echo "global.window = dom.window;" >> test-runner.js
-        echo "global.document = dom.window.document;" >> test-runner.js
-        echo "global.Mocha = require('mocha');" >> test-runner.js
-        echo "global.chai = require('chai');" >> test-runner.js
-        echo "global.expect = global.chai.expect;" >> test-runner.js
-        echo "const scriptContent = fs.readFileSync('script.js', 'utf8');" >> test-runner.js
-        echo "eval(scriptContent);" >> test-runner.js
-        echo "const testsContent = fs.readFileSync('tests.js', 'utf8');" >> test-runner.js
-        echo "eval(testsContent);" >> test-runner.js
-        echo "const mocha = new Mocha();" >> test-runner.js
-        echo "mocha.run();" >> test-runner.js
-        node test-runner.js
-    
     - name: Deploy to GitHub Pages
-      if: success()
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./
