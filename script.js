@@ -1,9 +1,8 @@
 function integerToRoman(num) {
-
   if (typeof num !== 'number' || isNaN(num) || num <= 0 || num >= 4000) {
     throw new Error('The number must be between 1 and 3999.');
   }
-  
+
   const romanNumerals = [
     { value: 1000, numeral: 'M' },
     { value: 900, numeral: 'CM' },
@@ -27,6 +26,7 @@ function integerToRoman(num) {
       num -= value;
     }
   }
+
   return result;
 }
 
@@ -34,36 +34,35 @@ function romanToInteger(roman) {
   if (typeof roman !== 'string' || roman.trim() === '') {
     throw new Error('Input must be a valid Roman numeral.');
   }
-  
+
   roman = roman.toUpperCase();
-  
+
   if (!/^[IVXLCDM]+$/.test(roman)) {
     throw new Error('The Roman numeral contains invalid characters.');
   }
-  
+
   const romanMap = {
-    'I': 1, 'V': 5, 'X': 10, 'L': 50,
-    'C': 100, 'D': 500, 'M': 1000
+    I: 1, V: 5, X: 10, L: 50,
+    C: 100, D: 500, M: 1000
   };
-  
+
   let total = 0;
-  let previousValue = 0;
-  
+  let prev = 0;
+
   for (let i = roman.length - 1; i >= 0; i--) {
-    const currentValue = romanMap[roman[i]];
-    if (currentValue < previousValue) {
-      total -= currentValue;
-    } else {
-      total += currentValue;
-    }
-    previousValue = currentValue;
+    const curr = romanMap[roman[i]];
+
+    if (curr < prev) total -= curr;
+    else total += curr;
+
+    prev = curr;
   }
-  
+
   const reconversion = integerToRoman(total);
   if (reconversion !== roman) {
-    throw new Error('The Roman numeral is not in canonical form.');
+    throw new Error('The Roman numeral is not canonical.');
   }
-  
+
   return total;
 }
 
@@ -79,18 +78,33 @@ function handleConversion() {
   try {
     if (mode === 'intToRoman') {
       const num = parseInt(input, 10);
-      if (isNaN(num)) {
-        throw new Error('Please enter a valid integer number.');
-      }
-      const roman = integerToRoman(num);
-      resultDiv.textContent = `Roman Numeral: ${roman}`;
-    } else if (mode === 'romanToInt') {
-      const num = romanToInteger(input);
-      resultDiv.textContent = `Integer: ${num}`;
+      if (isNaN(num)) throw new Error('Invalid integer');
+
+      resultDiv.textContent = integerToRoman(num);
+    } else {
+      resultDiv.textContent = romanToInteger(input);
     }
-  } catch (error) {
-    errorDiv.textContent = error.message;
+  } catch (err) {
+    errorDiv.textContent = err.message;
   }
 }
 
-document.getElementById('convertButton').addEventListener('click', handleConversion);
+// FIX importante (evita errores en tests)
+if (typeof document !== "undefined") {
+  const btn = document.getElementById('convertButton');
+  if (btn) btn.addEventListener('click', handleConversion);
+}
+
+// export para tests (browser global)
+if (typeof window !== "undefined") {
+  window.integerToRoman = integerToRoman;
+  window.romanToInteger = romanToInteger;
+}
+
+
+if (typeof module !== "undefined") {
+  module.exports = {
+    integerToRoman,
+    romanToInteger
+  };
+}
