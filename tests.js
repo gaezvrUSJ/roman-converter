@@ -65,3 +65,7 @@ describe('Roman to Integer Conversion', function() {
     expect(() => romanToInteger('ABC')).to.throw();
   });
 });
+
+if (typeof document !== 'undefined') {
+  document.getElementById('convertButton').addEventListener('click', handleConversion);
+}
