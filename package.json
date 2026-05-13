@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "lint": "eslint script.js",
-    "test": "mocha test.js"
+    "test": "mocha tests.js"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
