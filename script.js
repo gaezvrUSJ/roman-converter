@@ -75,63 +75,67 @@ function handleConversion() {
   resultDiv.textContent = '';
   errorDiv.textContent = '';
 
-  // Evento 1: Usuario hace clic en Convertir
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'click_convert', {
-      'event_category': 'user_action',
-      'event_label': mode
-    });
+  // Función auxiliar para enviar eventos a GA4
+  function sendGAEvent(eventName, eventParams) {
+    if (typeof gtag === 'function') {
+      gtag('event', eventName, eventParams);
+      console.log('GA4 Event:', eventName, eventParams);
+    } else {
+      console.warn('gtag not available');
+    }
   }
+
+  // Evento 1: Usuario hace clic en Convertir
+  sendGAEvent('click_convert', {
+    'event_category': 'user_action',
+    'event_label': mode
+  });
 
   try {
     if (mode === 'intToRoman') {
       const num = parseInt(input, 10);
-      if (isNaN(num)) throw new Error('Please enter a valid integer number.');
-      
+      if (isNaN(num)) throw new Error('Invalid integer');
+
       const roman = integerToRoman(num);
-      resultDiv.textContent = `Roman Numeral: ${roman}`;
+      resultDiv.textContent = roman;
       
-      // Evento 2: Conversión exitosa de entero a romano
-      if (typeof gtag !== 'undefined') {
-        gtag('event', 'conversion_success', {
-          'event_category': 'conversion',
-          'event_label': 'int_to_roman',
-          'value': num
-        });
-      }
+      // Evento 2: Conversión exitosa (Integer to Roman)
+      sendGAEvent('conversion_success', {
+        'event_category': 'conversion',
+        'event_label': 'int_to_roman',
+        'value': num
+      });
       
     } else {
       const num = romanToInteger(input);
-      resultDiv.textContent = `Integer: ${num}`;
+      resultDiv.textContent = num;
       
-      // Evento 2 alternativo: Conversión exitosa de romano a entero
-      if (typeof gtag !== 'undefined') {
-        gtag('event', 'conversion_success', {
-          'event_category': 'conversion',
-          'event_label': 'roman_to_int',
-          'value': num
-        });
-      }
+      // Evento 2: Conversión exitosa (Roman to Integer)
+      sendGAEvent('conversion_success', {
+        'event_category': 'conversion',
+        'event_label': 'roman_to_int',
+        'value': num
+      });
     }
   } catch (err) {
     errorDiv.textContent = err.message;
     
-    // Evento 3: Error del usuario (entrada inválida)
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'conversion_error', {
-        'event_category': 'error',
-        'event_label': mode,
-        'value': err.message
-      });
-    }
+    // Evento 3: Error del usuario
+    sendGAEvent('conversion_error', {
+      'event_category': 'error',
+      'event_label': mode,
+      'value': err.message
+    });
   }
 }
 
+// Inicializar evento del botón
 if (typeof document !== "undefined") {
   const btn = document.getElementById('convertButton');
   if (btn) btn.addEventListener('click', handleConversion);
 }
 
+// Export para tests (browser global)
 if (typeof window !== "undefined") {
   window.integerToRoman = integerToRoman;
   window.romanToInteger = romanToInteger;
