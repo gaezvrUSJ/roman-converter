@@ -75,32 +75,67 @@ function handleConversion() {
   resultDiv.textContent = '';
   errorDiv.textContent = '';
 
+  // Evento 1: Usuario hace clic en Convertir
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'click_convert', {
+      'event_category': 'user_action',
+      'event_label': mode
+    });
+  }
+
   try {
     if (mode === 'intToRoman') {
       const num = parseInt(input, 10);
-      if (isNaN(num)) throw new Error('Invalid integer');
-
-      resultDiv.textContent = integerToRoman(num);
+      if (isNaN(num)) throw new Error('Please enter a valid integer number.');
+      
+      const roman = integerToRoman(num);
+      resultDiv.textContent = `Roman Numeral: ${roman}`;
+      
+      // Evento 2: Conversión exitosa de entero a romano
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'conversion_success', {
+          'event_category': 'conversion',
+          'event_label': 'int_to_roman',
+          'value': num
+        });
+      }
+      
     } else {
-      resultDiv.textContent = romanToInteger(input);
+      const num = romanToInteger(input);
+      resultDiv.textContent = `Integer: ${num}`;
+      
+      // Evento 2 alternativo: Conversión exitosa de romano a entero
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'conversion_success', {
+          'event_category': 'conversion',
+          'event_label': 'roman_to_int',
+          'value': num
+        });
+      }
     }
   } catch (err) {
     errorDiv.textContent = err.message;
+    
+    // Evento 3: Error del usuario (entrada inválida)
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'conversion_error', {
+        'event_category': 'error',
+        'event_label': mode,
+        'value': err.message
+      });
+    }
   }
 }
 
-// FIX importante (evita errores en tests)
 if (typeof document !== "undefined") {
   const btn = document.getElementById('convertButton');
   if (btn) btn.addEventListener('click', handleConversion);
 }
 
-// export para tests (browser global)
 if (typeof window !== "undefined") {
   window.integerToRoman = integerToRoman;
   window.romanToInteger = romanToInteger;
 }
-
 
 if (typeof module !== "undefined") {
   module.exports = {
